@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Architecture — $MAIL</title>
+  <meta name="description" content="How $MAIL V1 works: signed authentication challenges, wallet-bound sessions, the mail API, and the honest Addressed → Delivered → Opened lifecycle.">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">$MAIL</a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="whitepaper.html">Whitepaper</a>
+        <a href="architecture.html" aria-current="page">Architecture</a>
+        <a href="security.html">Security &amp; Trust</a>
+        <a href="developers.html">Developers</a>
+        <a href="roadmap.html">Roadmap</a>
+        <a href="source.html">Source</a>
+      </nav>
+      <a class="nav-cta" href="https://mailboxteat.replit.app" rel="noopener">Open $MAIL</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container">
+      <section class="hero" style="padding-bottom:2.5rem">
+        <span class="eyebrow">Architecture</span>
+        <h1>Simple in front.<br><span class="grad">Careful underneath.</span></h1>
+        <p class="tagline">How a signed message becomes a session, and how a letter moves from addressed to opened — as implemented in the current V1 source.</p>
+      </section>
+
+      <section class="block no-rule" style="padding-top:0">
+        <span class="eyebrow">System path</span>
+        <h2>From wallet to data store.</h2>
+        <div class="flow">
+          <div class="flow-step"><strong>User wallet</strong><span>Phantom, Solflare, or another supported Solana wallet.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>Signed auth challenge</strong><span>The server issues a random, single-use, expiring challenge bound to the wallet. The wallet signs the message — never a transaction.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>Auth verification</strong><span>The server verifies the ed25519 signature against the wallet's public key and consumes the challenge atomically.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>Wallet-bound session</strong><span>An HMAC-signed, HTTP-only session cookie scoped to that wallet.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>$MAIL API</strong><span>Every route validates input and authorizes against the session wallet.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>Message / safety / state layer</strong><span>Folder placement, approved senders, blocking, reporting, link detection, delivery-state transitions.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>Data store</strong><span>PostgreSQL with parameterized queries only.</span></div>
+        </div>
+      </section>
+
+      <section class="block">
+        <span class="eyebrow">Letter lifecycle</span>
+        <h2>Addressed → Delivered → Opened.</h2>
+        <div class="flow">
+          <div class="flow-step"><strong>Sender</strong><span>An authenticated wallet writes a letter.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>Recipient wallet address</strong><span>Any valid Solana address — the recipient need not have used $MAIL.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>Addressed</strong><span>The system accepts the correspondence. Placement respects the recipient's rules: approved senders reach the Mailbox, unknown senders land in Requests by default, blocked senders are refused.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>Recipient authenticates</strong><span>The owner proves control of the wallet with a signed message.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>Delivered</strong><span>Recorded only when the authenticated recipient actually reaches their mail on a $MAIL surface.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>Recipient opens</strong><span>An explicit action by the recipient.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>Opened</strong><span>Recorded only after that explicit open. Only the real recipient can advance these states.</span></div>
+        </div>
+        <div class="notice">
+          <strong>Where the mail lives:</strong> normal V1 correspondence is stored by the $MAIL service and is <strong>not presented as on-chain messaging</strong>. The blockchain's role in V1 is identity: wallet addresses and the signatures that prove ownership of them.
+        </div>
+      </section>
+
+      <section class="block">
+        <span class="eyebrow">The V1 stack</span>
+        <h2>Contract-first, validated at every boundary.</h2>
+        <div class="cardgrid">
+          <div class="card">
+            <h4>Frontend</h4>
+            <p>React + Vite single-page app with wallet-adapter connections and typed API hooks generated from the OpenAPI contract.</p>
+          </div>
+          <div class="card">
+            <h4>API</h4>
+            <p>Express 5 with Zod-validated input and output generated from the same OpenAPI spec — one contract, enforced on both sides.</p>
+          </div>
+          <div class="card">
+            <h4>Database</h4>
+            <p>PostgreSQL via Drizzle ORM. Parameterized queries only; every read scoped to the session wallet.</p>
+          </div>
+          <div class="card">
+            <h4>Safety layer</h4>
+            <p>Layered rate limiting, payload caps, strict identifier validation, security headers, and a central generic error handler.</p>
+          </div>
+        </div>
+        <p class="dim">The full architecture notes live in the repository: <a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/docs/V1_ARCHITECTURE.md" rel="noopener">docs/V1_ARCHITECTURE.md</a> and <a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/docs/SECURITY_NOTES.md" rel="noopener">docs/SECURITY_NOTES.md</a>.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div>
+          <div class="footer-brand">$MAIL</div>
+          <p class="footer-tag">Every wallet has an address. Now it has a mailbox. Wallet-to-wallet mail for Solana.</p>
+        </div>
+        <div class="footer-links">
+          <div>
+            <h5>Site</h5>
+            <ul>
+              <li><a href="whitepaper.html">Whitepaper</a></li>
+              <li><a href="architecture.html">Architecture</a></li>
+              <li><a href="security.html">Security &amp; Trust</a></li>
+              <li><a href="developers.html">Developers</a></li>
+              <li><a href="roadmap.html">Roadmap</a></li>
+            </ul>
+          </div>
+          <div>
+            <h5>Project</h5>
+            <ul>
+              <li><a href="https://mailboxteat.replit.app" rel="noopener">Open $MAIL</a></li>
+              <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core" rel="noopener">Public source</a></li>
+              <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/SECURITY.md" rel="noopener">Security policy</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <p class="footer-note">$MAIL is developed and maintained by EgoShiftLabs. Current public technical release: v1.0-poc.</p>
+    </div>
+  </footer>
+</body>
+</html>

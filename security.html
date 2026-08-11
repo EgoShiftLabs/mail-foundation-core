@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Security &amp; Trust — $MAIL</title>
+  <meta name="description" content="What signing in to $MAIL does — and provably does not do. Signature authentication, no custody, and internal adversarial testing with published results.">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">$MAIL</a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="whitepaper.html">Whitepaper</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="security.html" aria-current="page">Security &amp; Trust</a>
+        <a href="developers.html">Developers</a>
+        <a href="roadmap.html">Roadmap</a>
+        <a href="source.html">Source</a>
+      </nav>
+      <a class="nav-cta" href="https://mailboxteat.replit.app" rel="noopener">Open $MAIL</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container">
+      <section class="hero" style="padding-bottom:2.5rem">
+        <span class="eyebrow">Security &amp; Trust</span>
+        <h1>Caution is <span class="grad">healthy.</span></h1>
+        <p class="pull">“Connecting a wallet to an unfamiliar application should make you cautious.<br><br>We think that caution is healthy.”</p>
+      </section>
+
+      <section class="block no-rule" style="padding-top:0">
+        <span class="eyebrow">What signing in is</span>
+        <h2>A signature proves ownership. Nothing else.</h2>
+        <p>$MAIL uses signed-message authentication to prove wallet ownership. Your wallet signs a human-readable challenge message — a <strong>message signature</strong>, never a transaction.</p>
+        <h3>Signing in does NOT:</h3>
+        <ul class="plainlist neglist">
+          <li>transfer SOL</li>
+          <li>transfer tokens</li>
+          <li>approve token spending</li>
+          <li>submit an asset-transfer transaction</li>
+          <li>reveal a private key</li>
+          <li>reveal a seed phrase</li>
+        </ul>
+        <div class="stamp">
+          <h4>The two rules that matter most</h4>
+          <p><strong>$MAIL never requires a seed phrase or private key.</strong> No screen, prompt, email, DM, or “support agent” associated with $MAIL will ever legitimately request them. Anything that does is an attack.</p>
+        </div>
+        <p><strong>V1 does not custody assets.</strong> There is no code path in V1 that holds, moves, or approves movement of any asset — no custody, no token functionality, no payment flow. If a wallet prompt during $MAIL sign-in ever asks you to approve a <em>transaction</em> rather than sign a <em>message</em>, stop and report it.</p>
+      </section>
+
+      <section class="block">
+        <span class="eyebrow">The architecture</span>
+        <h2>Security controls in the V1 design.</h2>
+        <div class="cardgrid">
+          <div class="card"><h4>Unpredictable challenges</h4><p>Authentication challenges use cryptographically unpredictable nonces.</p></div>
+          <div class="card"><h4>Wallet-bound auth</h4><p>Each challenge is bound to the requesting wallet — a challenge for one wallet cannot authenticate another.</p></div>
+          <div class="card"><h4>Challenge expiration</h4><p>Challenges are short-lived and expire if unused.</p></div>
+          <div class="card"><h4>Single-use consumption</h4><p>A challenge is consumed atomically on use. Replaying it — even concurrently — fails.</p></div>
+          <div class="card"><h4>Server-side verification</h4><p>ed25519 signatures are verified on the server, never trusted from the client.</p></div>
+          <div class="card"><h4>Replay resistance</h4><p>Consumed challenges are rejected; tampered or forged sessions are rejected.</p></div>
+          <div class="card"><h4>Cross-wallet isolation</h4><p>Every mailbox read and mutation is scoped to the authenticated session wallet.</p></div>
+          <div class="card"><h4>Blocking &amp; reporting</h4><p>Blocked senders are refused (RETURN TO SENDER); recipients can report messages and senders.</p></div>
+          <div class="card"><h4>Input validation</h4><p>Wallets, identifiers, folders, and payloads are strictly validated; malformed input fails safely.</p></div>
+          <div class="card"><h4>Rate limiting</h4><p>Layered per-IP and per-wallet limits on authentication, sending, reporting, and blocking.</p></div>
+          <div class="card"><h4>Enumeration resistance</h4><p>The API does not reveal whether an arbitrary wallet has ever used $MAIL or has mail waiting.</p></div>
+          <div class="card"><h4>Safe error handling</h4><p>A central error handler returns generic responses — no stack traces, no internal detail.</p></div>
+        </div>
+      </section>
+
+      <section class="block">
+        <span class="eyebrow">Testing</span>
+        <h2>Tested adversarially. Claimed honestly.</h2>
+        <p class="lede"><strong>36 / 36 internal adversarial security test scenarios are passing after remediation.</strong></p>
+        <div class="notice">
+          <strong>This is not an independent third-party security audit.</strong> The testing was performed internally by the maintainers using a rerunnable adversarial harness with disposable, zero-asset keypairs. No external certification is claimed. Independent technical review is welcome.
+        </div>
+        <p>The full findings, the claim-by-claim test matrix, and the harness itself are published in the repository:</p>
+        <ul class="doclist">
+          <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/SECURITY_AUDIT_V1.md" rel="noopener"><span class="doc-name">SECURITY_AUDIT_V1.md</span><span class="doc-desc">The adversarial review: findings, remediations, and residual-risk notes.</span></a></li>
+          <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/SECURITY_TEST_MATRIX_V1.md" rel="noopener"><span class="doc-name">SECURITY_TEST_MATRIX_V1.md</span><span class="doc-desc">Every security claim mapped to a test scenario and its result.</span></a></li>
+          <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/SECURITY.md" rel="noopener"><span class="doc-name">SECURITY.md</span><span class="doc-desc">The security policy and how to report a vulnerability responsibly.</span></a></li>
+        </ul>
+      </section>
+
+      <section class="block">
+        <span class="eyebrow">Your move</span>
+        <h2>Verify, don't just trust.</h2>
+        <ul class="plainlist">
+          <li>Review the source.</li>
+          <li>Review the tests.</li>
+          <li>Use an empty wallet first if you prefer.</li>
+        </ul>
+        <p style="margin-top:1.25rem">The <a href="source.html">public source</a> includes the authentication implementation and the exact test harness used, so every claim on this page can be checked rather than believed.</p>
+        <p class="pull" style="margin-top:2.5rem">“Your wallet should prove who you are.<br>It should not have to surrender control of what you own.”</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div>
+          <div class="footer-brand">$MAIL</div>
+          <p class="footer-tag">Every wallet has an address. Now it has a mailbox. Wallet-to-wallet mail for Solana.</p>
+        </div>
+        <div class="footer-links">
+          <div>
+            <h5>Site</h5>
+            <ul>
+              <li><a href="whitepaper.html">Whitepaper</a></li>
+              <li><a href="architecture.html">Architecture</a></li>
+              <li><a href="security.html">Security &amp; Trust</a></li>
+              <li><a href="developers.html">Developers</a></li>
+              <li><a href="roadmap.html">Roadmap</a></li>
+            </ul>
+          </div>
+          <div>
+            <h5>Project</h5>
+            <ul>
+              <li><a href="https://mailboxteat.replit.app" rel="noopener">Open $MAIL</a></li>
+              <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core" rel="noopener">Public source</a></li>
+              <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/SECURITY.md" rel="noopener">Security policy</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <p class="footer-note">$MAIL is developed and maintained by EgoShiftLabs. Current public technical release: v1.0-poc.</p>
+    </div>
+  </footer>
+</body>
+</html>

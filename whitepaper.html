@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Whitepaper — $MAIL</title>
+  <meta name="description" content="$MAIL Whitepaper V1 — Wallet-Native Communication for Solana. Every wallet has an address. Now it has a mailbox.">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">$MAIL</a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="whitepaper.html" aria-current="page">Whitepaper</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="security.html">Security &amp; Trust</a>
+        <a href="developers.html">Developers</a>
+        <a href="roadmap.html">Roadmap</a>
+        <a href="source.html">Source</a>
+      </nav>
+      <a class="nav-cta" href="https://mailboxteat.replit.app" rel="noopener">Open $MAIL</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container">
+      <article class="paper">
+        <span class="eyebrow">Whitepaper V1</span>
+        <h1>$MAIL<br>Wallet-Native Communication for Solana</h1>
+        <p class="subtitle">Every wallet has an address.<br>Now it has a mailbox.</p>
+        <p class="wp-meta">Maintained by EgoShiftLabs · Public technical release v1.0-poc · <a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/docs/WHITEPAPER_V1.md" rel="noopener">Canonical markdown</a></p>
+
+        <h2>Abstract</h2>
+        <p>$MAIL is wallet-to-wallet mail for Solana. It treats a Solana wallet address the way the postal system treats a street address: as a place correspondence can be sent, regardless of whether the occupant has ever announced they are ready to receive it.</p>
+        <p>Anyone can address a letter to any valid Solana wallet. The recipient does not need an account, a username, an email address, or a phone number — and does not need to have used $MAIL before. Mail waits in the wallet's mailbox until the owner proves control of the address with a signed authentication message and checks it.</p>
+        <p>V1 is a functional, security-tested proof of concept: letters, requests from unknown senders, junk, blocking, reporting, and privacy-first sharing, built on signature authentication that never moves assets. Basic consumer mail is free, and the project's public source is published for independent inspection.</p>
+        <p>This paper describes what V1 is, the principles it is built on, its security model, and the direction of future work. It describes future functionality as intent, not as promises.</p>
+
+        <h2>The communication problem created by wallet-only identity</h2>
+        <p>On Solana, identity increasingly begins and ends with a wallet address. A wallet can hold assets, sign transactions, and interact with applications — but it cannot receive a message.</p>
+        <p>There is no native way to reach the owner of an arbitrary wallet:</p>
+        <ul>
+          <li>Off-chain channels (email, Telegram, Discord, X) require knowing who the owner is somewhere else, which defeats wallet-native identity and invites impersonation.</li>
+          <li>On-chain “messages” (memo transactions, dust transfers with payloads) are public, costly, easily abused, and are not a correspondence experience.</li>
+          <li>Existing wallet chat products typically require both parties to register before contact is possible, which means the empty network cannot bootstrap itself.</li>
+        </ul>
+        <p>The result is a communication gap in a system otherwise built on addressability: every wallet has a public address, and almost none of them can receive mail.</p>
+
+        <h2>Wallet addresses as mailbox addresses</h2>
+        <p>$MAIL's founding observation is that a Solana wallet address already has the essential property of a mailing address: it is public, unique, and durable.</p>
+        <p>$MAIL gives that address another function: a mailbox.</p>
+        <ul>
+          <li>No username.</li>
+          <li>No email address.</li>
+          <li>No phone number.</li>
+        </ul>
+        <p>The address <em>is</em> the identity. Ownership of the mailbox is established cryptographically — by the wallet's ability to sign a message — not by an account system layered on top.</p>
+
+        <h2>Addressing wallets that have never registered</h2>
+        <p>The defining product behavior of $MAIL, inherited directly from physical mail: <strong>the recipient does not need to exist yet, as far as $MAIL is concerned.</strong></p>
+        <p>Any valid supported Solana wallet may be addressed. The recipient:</p>
+        <ul>
+          <li>does not need a $MAIL account</li>
+          <li>does not need to have visited $MAIL previously</li>
+          <li>does not need to be online</li>
+          <li>does not need to register before mail is addressed</li>
+        </ul>
+        <p>Mail addressed to a wallet is held for that wallet. When the owner eventually authenticates, their mail is already waiting. This is the core magic moment of the product, and V1 protects it.</p>
+
+        <h2>Signature authentication</h2>
+        <p>Proving ownership of a mailbox means proving control of the wallet — nothing more.</p>
+        <p>$MAIL authentication is signature-based:</p>
+        <ol>
+          <li>The client requests an authentication challenge for a wallet address.</li>
+          <li>The server issues a random, single-use, expiring challenge bound to that wallet, presented as a human-readable message that states plainly: <em>no SOL will move, and no transaction will be submitted.</em></li>
+          <li>The wallet signs the message — a message signature, never a transaction.</li>
+          <li>The server verifies the ed25519 signature against the wallet's public key, consumes the challenge atomically so it can never be reused, and establishes a signed, HTTP-only session.</li>
+        </ol>
+        <p>Signing in transfers no SOL, transfers no tokens, grants no spending approvals, and submits nothing to the chain. $MAIL never asks for a seed phrase or a private key; nothing legitimate ever will.</p>
+
+        <h2>The V1 postal system: Mailbox, Requests, Junk, Sent</h2>
+        <p>V1 organizes correspondence the way a post office would:</p>
+        <ul>
+          <li><strong>Mailbox</strong> — accepted and known correspondence.</li>
+          <li><strong>Requests</strong> — first contact from unknown senders, held for the recipient's decision.</li>
+          <li><strong>Junk</strong> — unwanted or filtered correspondence.</li>
+          <li><strong>Sent</strong> — outgoing correspondence.</li>
+        </ul>
+        <p>Replies and threads are supported, but the experience deliberately preserves the letter metaphor: people write letters and send them to an address. There are no typing indicators, no online status, no read-receipt pressure loop.</p>
+
+        <h2>Honest states: Addressed, Delivered, Opened</h2>
+        <p>$MAIL uses three truthful communication states and refuses to overclaim:</p>
+        <ul>
+          <li><strong>ADDRESSED</strong> — The system accepted correspondence addressed to the wallet. This does not mean the recipient knows about it.</li>
+          <li><strong>DELIVERED</strong> — The authenticated recipient reached an appropriate $MAIL surface where the correspondence was presented.</li>
+          <li><strong>OPENED</strong> — The authenticated recipient explicitly opened the correspondence.</li>
+        </ul>
+        <p>“Delivered” is never claimed while mail merely waits, and “opened” is never claimed without an explicit open by the authenticated recipient. This honesty rule applies everywhere, including marketing copy.</p>
+
+        <h2>Recipient control</h2>
+        <p>The recipient is in charge of their own mailbox:</p>
+        <ul>
+          <li>Mail from unknown senders lands in <strong>Requests</strong> by default; the recipient can change how unknown senders are handled (requests, direct to mailbox, or straight to junk).</li>
+          <li>Accepting a request establishes approved correspondence; approved senders reach the Mailbox directly.</li>
+          <li>Sending mail to someone automatically approves their replies into your Mailbox.</li>
+          <li><strong>Blocking</strong> is immediate: future mail from a blocked wallet is refused (RETURN TO SENDER), and existing mail is junked.</li>
+          <li><strong>Reporting</strong> attaches a recipient-filed report to a message and sender for future moderation tooling.</li>
+          <li>Links in mail are never trusted: destination domains are detected at send time and surfaced with a warning before anything opens.</li>
+        </ul>
+        <p>Recipient control takes priority over sender convenience.</p>
+
+        <h2>Privacy and safety</h2>
+        <p>Private correspondence is private by default.</p>
+        <ul>
+          <li>All mailbox reads are scoped to the authenticated session wallet; message detail is available only to the sender or recipient.</li>
+          <li>The shareable “I got mail” card never contains the letter body — the server never returns body content in share data. Revealing content is an explicit, owner-side choice.</li>
+          <li>Future discovery systems must never reveal private message bodies or unnecessary sensitive metadata.</li>
+        </ul>
+        <p>Safety tooling — request isolation, junk, blocking, reporting, link warnings — is part of the V1 foundation, and future development is required to strengthen it, never weaken it for engagement.</p>
+
+        <h2>Why $MAIL is mail rather than another chat app</h2>
+        <p>Chat is a presence medium: it implies both parties are here, now, and expects an immediate reply. Mail is an addressability medium: it works even when the recipient is absent, unknown, or not yet a user — which is exactly the situation on Solana, where the address space is enormous and almost none of it is “online” in any messaging product.</p>
+        <p>$MAIL is deliberately correspondence, not chat:</p>
+        <ul>
+          <li>letters, not message bubbles</li>
+          <li>an address that can receive, not an account that must be created</li>
+          <li>requests and junk, not open DMs</li>
+          <li>honest delivery states, not read-receipt pressure</li>
+        </ul>
+        <p>$MAIL is not intended to become another Telegram, Discord, or messenger clone. The complexity belongs underneath the mailbox, never in front of the user.</p>
+
+        <h2>The Consumer Mailbox</h2>
+        <p>V1 is the consumer mailbox: a simple, mobile-first, wallet-browser-first experience with two primary journeys.</p>
+        <p><strong>Check my mail</strong> → connect wallet → sign the ownership challenge → read what's waiting.</p>
+        <p><strong>Send mail</strong> → paste or choose a wallet address → write the letter → send.</p>
+        <p>Everything else — safety controls, preferences, share cards — supports those two journeys. The product language is postal (letters, the Postmaster, RETURN TO SENDER), friendly, and nontechnical wherever possible.</p>
+
+        <h2>Future: Mail Desk</h2>
+        <p><em>Future work — not part of V1.</em></p>
+        <p>Mail Desk is the contemplated project-facing surface: verified projects and organizations sending signed announcements to their holders, strictly separated from personal mail, with recipients opting in per project. It is deliberately absent from V1 so that personal correspondence defines the product first.</p>
+
+        <h2>Future: Developer Mode</h2>
+        <p><em>Future work — not part of V1.</em></p>
+        <p>Developer Mode is contemplated infrastructure for building on $MAIL: authenticated APIs, programmatic mail, webhooks, verified organizational senders, application-generated correspondence, and project-to-holder communication. The long-term economic intuition: consumers create network activity; developers, projects, and organizations pay for advanced infrastructure.</p>
+
+        <h2>Future: Packages</h2>
+        <p><em>Future work — not part of V1. Requires separate security review before any implementation.</em></p>
+        <p>A Package is a letter that carries something: <strong>letter + asset = package.</strong> Possible future uses include SOL gifts, token gifts, project rewards, and airdrop distribution that arrives with context instead of appearing unexplained in a wallet. Acceptance of any value-bearing mail would be explicit and transaction-signed by the recipient — never automatic. V1 contains no asset transfer functionality, and none will be added until a dedicated security architecture has been reviewed and approved.</p>
+
+        <h2>Future: Certified Mail</h2>
+        <p><em>Research — not part of V1.</em></p>
+        <p>Certified Mail is a research direction: a contemplated class of correspondence with stronger sender verification and stronger delivery attestation than ordinary mail, for situations where who sent it and whether it arrived matter more than usual. Its design, guarantees, and mechanism are open research questions and no specific implementation is promised.</p>
+
+        <h2>The discovery challenge</h2>
+        <p>Mail can be addressed to any wallet — but a wallet owner who has never heard of $MAIL does not know their mail is waiting. Discovery is therefore the central growth problem, and it must be solved without violating privacy.</p>
+        <p>A bare wallet address is not automatically a notification endpoint, and $MAIL never pretends otherwise. Discovery has to be built from privacy-safe signals and explicitly enrolled channels.</p>
+
+        <h2>Future: Mail Flag</h2>
+        <p><em>Future work — not part of V1.</em></p>
+        <p>The Mail Flag is the contemplated privacy-safe discovery primitive: a way to indicate that a wallet has mail waiting — <strong>MAIL WAITING</strong> — without exposing the correspondence, the sender, or anything about the contents. It is discovery, not public inbox access: ownership authentication remains required to read anything.</p>
+
+        <h2>Future: opt-in notifications</h2>
+        <p><em>Future work — not part of V1.</em></p>
+        <p>Notification capability requires a supported, explicitly enrolled channel — browser/PWA push, wallet-supported notification infrastructure, Telegram, or other channels the owner deliberately connects. Notifications must announce that the flag is up without leaking sender or content off-platform.</p>
+
+        <h2>Spam and attention control</h2>
+        <p>A system where anyone can address anyone must take abuse seriously from the start. V1 ships with the foundation:</p>
+        <ul>
+          <li>unknown-sender isolation into Requests</li>
+          <li>junk handling, blocking (with refusal of future mail), and reporting</li>
+          <li>layered rate limiting on sending, reporting, blocking, and authentication endpoints</li>
+          <li>payload limits and strict input validation</li>
+          <li>wallet-enumeration resistance, so the API does not reveal whether an arbitrary wallet has mail</li>
+        </ul>
+        <p>Before broad public adoption, this hardening must deepen: sender throttling, abuse detection, and automated attack controls are prerequisites for high-volume delivery, not afterthoughts. Future economic mechanisms (such as optional paid postage for unsolicited reach) are contemplated as spam filters — while replies and basic correspondence stay free.</p>
+
+        <h2>The free consumer utility principle</h2>
+        <p>$MAIL is utility-first. Ordinary users must be able to <strong>receive, read, send, and reply</strong> without purchasing anything.</p>
+        <p>Basic consumer mail is free in V1 and should remain free. Monetization belongs around advanced network infrastructure — never as a tollbooth in front of a person's own mailbox.</p>
+
+        <h2>Future $MAIL token philosophy</h2>
+        <p>A future $MAIL token is contemplated. <strong>V1 does not depend on it</strong>: there is no token functionality, no payment flow, and no custody anywhere in the V1 codebase.</p>
+        <p>The philosophy for any future token is fixed:</p>
+        <ul>
+          <li>Basic consumer mail must remain free. Holding a token must never become a prerequisite for ordinary users to access their own mailbox.</li>
+          <li>Future token utility should come from legitimate network demand — developer and API infrastructure, verified organizational senders, advanced distribution services, high-volume network capabilities — not from forced access to basic communication.</li>
+        </ul>
+        <p>These are directions, not commitments. No tokenomics are defined in this paper, deliberately.</p>
+
+        <h2>Network effect</h2>
+        <p>$MAIL's acquisition loop is the mail itself:</p>
+        <ol>
+          <li>A sender addresses mail to a wallet.</li>
+          <li>The recipient may never have used $MAIL.</li>
+          <li>The recipient discovers there is mail waiting.</li>
+          <li>They visit $MAIL and authenticate their wallet.</li>
+          <li>Their mail is already there — the mailbox was always theirs.</li>
+          <li>They reply, or send mail to another wallet.</li>
+        </ol>
+        <p>Every letter to a new wallet is an invitation that carries its own payload. The product grows by being used, not by requiring both sides to join first.</p>
+
+        <h2>Mailbox Activation Rate</h2>
+        <p>The primary future network metric:</p>
+        <blockquote><strong>Mailbox Activation Rate</strong> — the percentage of previously inactive recipient wallets that later authenticate and access their mailbox after receiving legitimate mail.</blockquote>
+        <p>It measures the only loop that matters: mail sent into the dark actually turning on mailboxes. V1 does not publish metrics; the definition is recorded here so that future measurement is honest from day one.</p>
+
+        <h2>Security model</h2>
+        <p>V1's security model, in brief (full detail in the repository's <a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/SECURITY_AUDIT_V1.md" rel="noopener">security documentation</a>):</p>
+        <ul>
+          <li><strong>Authentication</strong> — random, cryptographically unpredictable challenges; wallet-bound; expiring; consumed atomically on use (single-use, race-safe); ed25519 signatures verified server-side; malformed input fails safely.</li>
+          <li><strong>Sessions</strong> — HMAC-signed, HTTP-only cookies; tampered or forged sessions are rejected.</li>
+          <li><strong>Authorization</strong> — every mailbox read and mutation is scoped to the authenticated session wallet; cross-wallet access attempts are denied; delivery/opened states advance only through the real recipient.</li>
+          <li><strong>Input handling</strong> — strict validation of wallets, identifiers, folders, and preferences; body-size caps at both the JSON and content layer; parameterized queries throughout; no server-side HTML rendering of mail content.</li>
+          <li><strong>Abuse resistance</strong> — layered per-IP and per-wallet rate limiting on challenge, verify, send, report, and block endpoints, with a bounded, fail-closed limiter store.</li>
+          <li><strong>Disclosure control</strong> — uniform challenge responses prevent wallet enumeration; a central error handler returns generic messages without stack traces.</li>
+          <li><strong>No custody</strong> — V1 holds no assets. Authentication cannot move SOL and cannot submit a transaction.</li>
+        </ul>
+        <p><strong>36 of 36 internal adversarial security test scenarios pass after remediation.</strong> This was internal testing by the maintainers with a rerunnable harness using disposable, zero-asset keypairs. <strong>It is not an independent third-party security audit</strong>, and no external certification is claimed. The audit report, the claim-by-claim test matrix, and the harness itself are published in the repository so the testing can be re-run and challenged.</p>
+
+        <h2>Current V1 limitations</h2>
+        <p>V1 is a proof of concept, and says so. Known, documented limitations include:</p>
+        <ul>
+          <li>Rate limits are per-instance and in-memory; horizontal scaling requires a shared store or edge enforcement.</li>
+          <li>Reports are stored but not yet acted on automatically; moderation tooling is future work.</li>
+          <li>No notification channels yet — mail discovery currently requires visiting $MAIL.</li>
+          <li>Ordinary V1 correspondence is stored off-chain and is not presented as on-chain messaging.</li>
+          <li>The Porch (public drop-off), Mail Desk, Packages, and Developer Mode are visible in the product philosophy but intentionally unbuilt.</li>
+          <li>Challenge expiry is verified by code inspection rather than a live time-elapsed test; single-use and wallet binding are dynamically tested.</li>
+        </ul>
+
+        <h2>Public-source philosophy</h2>
+        <p>Trust claims about wallet software are worthless if they cannot be checked. The V1 technical source is published so that anyone can:</p>
+        <ul>
+          <li>read the authentication implementation and confirm that signing in is a message signature, never a transaction</li>
+          <li>confirm there is no code path that requests a seed phrase or private key, custodies assets, or submits transactions</li>
+          <li>re-run the adversarial security harness against their own instance</li>
+          <li>audit the privacy boundaries around mail bodies and share cards</li>
+        </ul>
+        <p>The repository is published for transparency and independent technical verification: <strong>verify, don't just trust.</strong> Independent technical review is welcome, and responsible disclosure is documented in <a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/SECURITY.md" rel="noopener">SECURITY.md</a>.</p>
+
+        <h2>Roadmap</h2>
+        <ul>
+          <li><strong>CURRENT</strong> — V1 foundation and public technical source: the consumer mailbox, signature authentication, requests/junk/blocking/reporting, privacy-first share cards, and the published security documentation.</li>
+          <li><strong>NEXT</strong> — Discovery and protection: the Mail Flag, opt-in notifications, and stronger abuse infrastructure.</li>
+          <li><strong>LATER</strong> — Developer Mode, authenticated APIs, and the early Mail Desk.</li>
+          <li><strong>RESEARCH</strong> — Packages, contextual airdrops, Certified Mail, asset-aware correspondence, and future network/token economics.</li>
+        </ul>
+        <p>No completion percentages, no dates. Sequence over schedule.</p>
+
+        <h2>Conclusion</h2>
+        <p>Every Solana wallet already has an address. $MAIL's proposition is that the address deserves a mailbox: a private, recipient-controlled place where anyone can be reached and no one can be exploited by the act of checking their own mail.</p>
+        <p>V1 keeps the promise small and keeps it honestly: letters between wallets, authentication that only ever proves ownership, safety controls in the recipient's hands, honest delivery states, free basic mail, and public source for anyone who prefers verification to trust.</p>
+        <p>The mailbox comes first. The network grows one letter at a time.</p>
+
+        <p class="wp-meta">This whitepaper describes V1 as implemented and future work as intent. Where this document and the V1 Master Specification differ, the specification governs. Nothing in this paper is an offer, a promise of future functionality, or financial advice.</p>
+      </article>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div>
+          <div class="footer-brand">$MAIL</div>
+          <p class="footer-tag">Every wallet has an address. Now it has a mailbox. Wallet-to-wallet mail for Solana.</p>
+        </div>
+        <div class="footer-links">
+          <div>
+            <h5>Site</h5>
+            <ul>
+              <li><a href="whitepaper.html">Whitepaper</a></li>
+              <li><a href="architecture.html">Architecture</a></li>
+              <li><a href="security.html">Security &amp; Trust</a></li>
+              <li><a href="developers.html">Developers</a></li>
+              <li><a href="roadmap.html">Roadmap</a></li>
+            </ul>
+          </div>
+          <div>
+            <h5>Project</h5>
+            <ul>
+              <li><a href="https://mailboxteat.replit.app" rel="noopener">Open $MAIL</a></li>
+              <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core" rel="noopener">Public source</a></li>
+              <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/SECURITY.md" rel="noopener">Security policy</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <p class="footer-note">$MAIL is developed and maintained by EgoShiftLabs. Current public technical release: v1.0-poc.</p>
+    </div>
+  </footer>
+</body>
+</html>

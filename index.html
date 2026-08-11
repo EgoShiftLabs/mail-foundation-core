@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>$MAIL — Wallet-to-wallet mail for Solana</title>
+  <meta name="description" content="Every wallet has an address. Now it has a mailbox. $MAIL is wallet-to-wallet mail for Solana — send correspondence directly to a Solana wallet address.">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">$MAIL</a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="index.html" aria-current="page">Home</a>
+        <a href="whitepaper.html">Whitepaper</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="security.html">Security &amp; Trust</a>
+        <a href="developers.html">Developers</a>
+        <a href="roadmap.html">Roadmap</a>
+        <a href="source.html">Source</a>
+      </nav>
+      <a class="nav-cta" href="https://mailboxteat.replit.app" rel="noopener">Open $MAIL</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container">
+      <section class="hero">
+        <svg class="postmark" viewBox="0 0 200 200" aria-hidden="true">
+          <defs>
+            <path id="circ" d="M100,100 m-72,0 a72,72 0 1,1 144,0 a72,72 0 1,1 -144,0"/>
+          </defs>
+          <circle cx="100" cy="100" r="88" fill="none" stroke="#DB2777" stroke-width="1.5" stroke-dasharray="4 6"/>
+          <circle cx="100" cy="100" r="56" fill="none" stroke="#7C3AED" stroke-width="1.5"/>
+          <text font-family="JetBrains Mono, monospace" font-size="13" letter-spacing="3.5" fill="#6D28D9">
+            <textPath href="#circ">$MAIL · SOLANA · WALLET-TO-WALLET · POSTMARKED ·</textPath>
+          </text>
+        </svg>
+        <span class="eyebrow">Wallet-to-wallet mail for Solana</span>
+        <h1>Every wallet has an address.<br><span class="grad">Now it has a mailbox.</span></h1>
+        <p class="tagline">Send correspondence directly to a Solana wallet address — even if the recipient has never used $MAIL before.</p>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="https://mailboxteat.replit.app" rel="noopener">Open $MAIL</a>
+          <a class="btn btn-outline" href="whitepaper.html">Read the whitepaper</a>
+          <a class="btn btn-ghost" href="https://github.com/EgoShiftLabs/mail-foundation-core" rel="noopener">View source</a>
+        </div>
+      </section>
+
+      <section class="block">
+        <span class="eyebrow">The idea</span>
+        <h2>The address is already there. $MAIL adds the mailbox.</h2>
+        <p class="lede">A Solana wallet already has a public address.</p>
+        <p class="lede">$MAIL gives that address another function: <strong>a mailbox.</strong></p>
+        <ul class="plainlist" style="margin:1.5rem 0">
+          <li>No username.</li>
+          <li>No email address.</li>
+          <li>No phone number.</li>
+        </ul>
+        <p>Wallet ownership is proven through a signed authentication message — a message signature, never a transaction.</p>
+        <p><strong>Basic V1 mail is free.</strong></p>
+      </section>
+
+      <section class="block">
+        <span class="eyebrow">How a letter travels</span>
+        <h2>From address to opened, honestly.</h2>
+        <div class="flow horizontal">
+          <div class="flow-step"><strong>Wallet address</strong><span>Any valid Solana wallet.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>Mailbox address</strong><span>The same address, now receivable.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>Letter addressed</strong><span>Mail is accepted and waits.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>Owner authenticates</strong><span>A signed message proves control.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>Delivered</strong><span>The recipient reaches their mail.</span></div>
+          <div class="flow-arrow"><span>↓</span></div>
+          <div class="flow-step"><strong>Opened</strong><span>The recipient opens the letter.</span></div>
+        </div>
+        <dl class="deftable">
+          <div class="defrow">
+            <dt>Addressed</dt>
+            <dd>The system accepted correspondence addressed to the wallet.</dd>
+          </div>
+          <div class="defrow">
+            <dt>Delivered</dt>
+            <dd>The authenticated recipient reached an appropriate $MAIL surface.</dd>
+          </div>
+          <div class="defrow">
+            <dt>Opened</dt>
+            <dd>The authenticated recipient explicitly opened the correspondence.</dd>
+          </div>
+        </dl>
+        <p class="dim">$MAIL never claims “delivered” while mail merely waits, and never claims “opened” without an explicit open. These states are truthful by rule — everywhere, including this website.</p>
+      </section>
+
+      <section class="block">
+        <span class="eyebrow">What V1 includes</span>
+        <h2>A complete consumer mailbox, kept deliberately small.</h2>
+        <div class="cardgrid">
+          <div class="card">
+            <h4>Letters</h4>
+            <p>Wallet-to-wallet correspondence between Solana addresses, with replies and threads that stay letters — not chat bubbles.</p>
+          </div>
+          <div class="card">
+            <h4>Requests</h4>
+            <p>First contact from an unknown sender arrives as a request the recipient can accept, decline, or junk.</p>
+          </div>
+          <div class="card">
+            <h4>Recipient safety</h4>
+            <p>Junk, blocking with RETURN TO SENDER refusal, reporting, and link-destination warnings — all in the recipient's hands.</p>
+          </div>
+          <div class="card">
+            <h4>Private by default</h4>
+            <p>Share that you got mail without revealing the letter: share cards never contain the message body.</p>
+          </div>
+        </div>
+        <p class="dim">V1 is a security-tested proof of concept with its technical source published for independent review. Read <a href="security.html">Security &amp; Trust</a> for the exact claims and their limits.</p>
+      </section>
+
+      <section class="block">
+        <span class="eyebrow">Go deeper</span>
+        <h2>Understand it, then verify it.</h2>
+        <ul class="doclist">
+          <li><a href="whitepaper.html"><span class="doc-name">WHITEPAPER</span><span class="doc-desc">What $MAIL is, the principles it is built on, and where it is going.</span></a></li>
+          <li><a href="architecture.html"><span class="doc-name">ARCHITECTURE</span><span class="doc-desc">How V1 actually works, from signed challenge to opened letter.</span></a></li>
+          <li><a href="security.html"><span class="doc-name">SECURITY &amp; TRUST</span><span class="doc-desc">What signing in does — and provably does not do.</span></a></li>
+          <li><a href="source.html"><span class="doc-name">SOURCE</span><span class="doc-desc">The public V1 technical release, documentation, and test harness.</span></a></li>
+        </ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div>
+          <div class="footer-brand">$MAIL</div>
+          <p class="footer-tag">Every wallet has an address. Now it has a mailbox. Wallet-to-wallet mail for Solana.</p>
+        </div>
+        <div class="footer-links">
+          <div>
+            <h5>Site</h5>
+            <ul>
+              <li><a href="whitepaper.html">Whitepaper</a></li>
+              <li><a href="architecture.html">Architecture</a></li>
+              <li><a href="security.html">Security &amp; Trust</a></li>
+              <li><a href="developers.html">Developers</a></li>
+              <li><a href="roadmap.html">Roadmap</a></li>
+            </ul>
+          </div>
+          <div>
+            <h5>Project</h5>
+            <ul>
+              <li><a href="https://mailboxteat.replit.app" rel="noopener">Open $MAIL</a></li>
+              <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core" rel="noopener">Public source</a></li>
+              <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/SECURITY.md" rel="noopener">Security policy</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <p class="footer-note">$MAIL is developed and maintained by EgoShiftLabs. Current public technical release: v1.0-poc.</p>
+    </div>
+  </footer>
+</body>
+</html>

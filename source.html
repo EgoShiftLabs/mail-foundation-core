@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Source — $MAIL</title>
+  <meta name="description" content="The $MAIL public technical source: repository, release v1.0-poc, and the key documents for verifying every claim.">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">$MAIL</a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="whitepaper.html">Whitepaper</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="security.html">Security &amp; Trust</a>
+        <a href="developers.html">Developers</a>
+        <a href="roadmap.html">Roadmap</a>
+        <a href="source.html" aria-current="page">Source</a>
+      </nav>
+      <a class="nav-cta" href="https://mailboxteat.replit.app" rel="noopener">Open $MAIL</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container">
+      <section class="hero" style="padding-bottom:2.5rem">
+        <span class="eyebrow">Source</span>
+        <h1>Published to be <span class="grad">checked.</span></h1>
+        <p class="tagline">The V1 technical source is public so that every claim — about authentication, custody, privacy, and safety — can be verified rather than believed.</p>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="https://github.com/EgoShiftLabs/mail-foundation-core" rel="noopener">github.com/EgoShiftLabs/mail-foundation-core</a>
+        </div>
+      </section>
+
+      <section class="block no-rule" style="padding-top:0">
+        <div class="stamp">
+          <h4>Current public technical release</h4>
+          <p style="font-family:var(--mono);font-size:1.1rem"><strong>v1.0-poc</strong></p>
+          <p class="dim" style="margin-bottom:0">The V1 proof-of-concept snapshot, exported from the approved development baseline. Provenance notes, including the exact source commit hash, are in the repository.</p>
+        </div>
+      </section>
+
+      <section class="block">
+        <span class="eyebrow">Start here</span>
+        <h2>The documents that matter.</h2>
+        <ul class="doclist">
+          <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/README.md" rel="noopener"><span class="doc-name">README</span><span class="doc-desc">What V1 does, the trust model, and how to build and run it locally.</span></a></li>
+          <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/SECURITY.md" rel="noopener"><span class="doc-name">SECURITY.md</span><span class="doc-desc">The security policy: the two rules that matter most, and responsible disclosure.</span></a></li>
+          <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/SECURITY_AUDIT_V1.md" rel="noopener"><span class="doc-name">SECURITY_AUDIT_V1.md</span><span class="doc-desc">The internal adversarial audit: findings, remediations, and residual risks.</span></a></li>
+          <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/SECURITY_TEST_MATRIX_V1.md" rel="noopener"><span class="doc-name">SECURITY_TEST_MATRIX_V1.md</span><span class="doc-desc">36 scenarios, claim by claim, with results — plus what was deliberately not tested.</span></a></li>
+          <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/MAIL_V1_MASTER_SPECIFICATION.md" rel="noopener"><span class="doc-name">MAIL_V1_MASTER_SPECIFICATION.md</span><span class="doc-desc">The canonical product record: what V1 is, its principles, and its change control.</span></a></li>
+          <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/docs/WHITEPAPER_V1.md" rel="noopener"><span class="doc-name">WHITEPAPER_V1.md</span><span class="doc-desc">The whitepaper in canonical markdown form — also readable on this site.</span></a></li>
+        </ul>
+        <p class="dim">Also in the repository: <a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/docs/V1_ARCHITECTURE.md" rel="noopener">architecture notes</a>, <a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/docs/PRODUCT_PRINCIPLES.md" rel="noopener">product principles</a>, <a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/docs/FUTURE_ROADMAP.md" rel="noopener">roadmap notes</a>, and the <a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/artifacts/api-server/security-tests.mjs" rel="noopener">rerunnable security test harness</a>.</p>
+      </section>
+
+      <section class="block">
+        <span class="eyebrow">Verify it yourself</span>
+        <h2>Three checks worth an hour.</h2>
+        <ul class="plainlist">
+          <li>Read the authentication routes and confirm sign-in verifies a message signature — and that no code path constructs or submits a transaction.</li>
+          <li>Search the codebase for any request for a seed phrase or private key. There isn't one, and there never legitimately will be.</li>
+          <li>Run the adversarial harness against your own local instance and watch the 36 scenarios execute.</li>
+        </ul>
+        <div class="notice">
+          <strong>License note:</strong> the repository is currently published without a software license; the licensing decision is intentionally deferred, and all rights are reserved by EgoShiftLabs until a license is chosen. Publication is for transparency and independent technical verification.
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div>
+          <div class="footer-brand">$MAIL</div>
+          <p class="footer-tag">Every wallet has an address. Now it has a mailbox. Wallet-to-wallet mail for Solana.</p>
+        </div>
+        <div class="footer-links">
+          <div>
+            <h5>Site</h5>
+            <ul>
+              <li><a href="whitepaper.html">Whitepaper</a></li>
+              <li><a href="architecture.html">Architecture</a></li>
+              <li><a href="security.html">Security &amp; Trust</a></li>
+              <li><a href="developers.html">Developers</a></li>
+              <li><a href="roadmap.html">Roadmap</a></li>
+            </ul>
+          </div>
+          <div>
+            <h5>Project</h5>
+            <ul>
+              <li><a href="https://mailboxteat.replit.app" rel="noopener">Open $MAIL</a></li>
+              <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core" rel="noopener">Public source</a></li>
+              <li><a href="https://github.com/EgoShiftLabs/mail-foundation-core/blob/main/SECURITY.md" rel="noopener">Security policy</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <p class="footer-note">$MAIL is developed and maintained by EgoShiftLabs. Current public technical release: v1.0-poc.</p>
+    </div>
+  </footer>
+</body>
+</html>
