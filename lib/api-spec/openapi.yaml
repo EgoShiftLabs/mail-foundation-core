@@ -1,0 +1,735 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: $MAIL — Solana wallet mailbox API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Wallet ownership authentication (signature-based, no transactions)
+  - name: mailbox
+    description: Mailbox state and summaries
+  - name: messages
+    description: Sending, receiving, and organizing mail
+  - name: safety
+    description: Blocking and reporting
+  - name: preferences
+    description: Mailbox preferences
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /auth/challenge:
+    post:
+      operationId: createAuthChallenge
+      tags: [auth]
+      summary: Get a sign-in challenge for a wallet
+      description: Returns a nonce message the wallet must sign to prove ownership. No transaction, no SOL moves.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthChallengeInput"
+      responses:
+        "200":
+          description: Challenge created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthChallenge"
+        "400":
+          description: Invalid wallet address
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /auth/verify:
+    post:
+      operationId: verifyAuthSignature
+      tags: [auth]
+      summary: Verify a signed challenge and start a session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthVerifyInput"
+      responses:
+        "200":
+          description: Session started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "401":
+          description: Signature verification failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /auth/session:
+    get:
+      operationId: getSession
+      tags: [auth]
+      summary: Get the current session
+      responses:
+        "200":
+          description: Current session state (wallet is null when signed out)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: End the current session
+      responses:
+        "200":
+          description: Signed out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+  /mailbox/summary:
+    get:
+      operationId: getMailboxSummary
+      tags: [mailbox]
+      summary: Mailbox counts and flag state for the signed-in wallet
+      responses:
+        "200":
+          description: Summary of the wallet's mailbox
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MailboxSummary"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /messages:
+    get:
+      operationId: listMessages
+      tags: [messages]
+      summary: List messages in a folder for the signed-in wallet
+      description: Listing mailbox/requests/junk marks newly-surfaced incoming mail as delivered.
+      parameters:
+        - name: folder
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/Folder"
+      responses:
+        "200":
+          description: Messages in the folder, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send mail to any valid Solana wallet address
+      description: The recipient does not need to be a $MAIL user. The message is recorded as addressed to that wallet.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Mail addressed to the recipient wallet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "400":
+          description: Invalid recipient address or empty body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "403":
+          description: Recipient has blocked this sender (RETURN TO SENDER)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /messages/{id}:
+    get:
+      operationId: getMessage
+      tags: [messages]
+      summary: Get a single message
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /messages/{id}/thread:
+    get:
+      operationId: getMessageThread
+      tags: [messages]
+      summary: Get the full correspondence thread containing this message
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Thread messages, oldest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /messages/{id}/open:
+    post:
+      operationId: openMessage
+      tags: [messages]
+      summary: Mark a message opened by the authenticated recipient
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The opened message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /messages/{id}/accept:
+    post:
+      operationId: acceptMessage
+      tags: [messages]
+      summary: Accept mail into the Mailbox (from Requests or Junk)
+      description: Also establishes the sender as approved, so future mail from them lands in the Mailbox.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The accepted message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /messages/{id}/junk:
+    post:
+      operationId: junkMessage
+      tags: [messages]
+      summary: Move a message to Junk Mail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The junked message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /messages/{id}/share:
+    get:
+      operationId: getShareCard
+      tags: [messages]
+      summary: Get privacy-first share card data for a delivery
+      description: Message content stays PRIVATE unless the owner explicitly requests reveal=true.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Share card data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareCard"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /blocked:
+    get:
+      operationId: listBlockedWallets
+      tags: [safety]
+      summary: List wallets blocked by the signed-in wallet
+      responses:
+        "200":
+          description: Blocked wallets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BlockedWallet"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+    post:
+      operationId: blockWallet
+      tags: [safety]
+      summary: Block a sender wallet
+      description: Existing mail from the sender moves to Junk. Future mail is refused.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlockInput"
+      responses:
+        "201":
+          description: Wallet blocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockedWallet"
+        "400":
+          description: Invalid wallet address
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /blocked/{wallet}:
+    delete:
+      operationId: unblockWallet
+      tags: [safety]
+      summary: Unblock a sender wallet
+      parameters:
+        - name: wallet
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Wallet unblocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /reports:
+    post:
+      operationId: reportSender
+      tags: [safety]
+      summary: Report a message/sender
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportInput"
+      responses:
+        "201":
+          description: Report recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /preferences:
+    get:
+      operationId: getPreferences
+      tags: [preferences]
+      summary: Get mailbox preferences for the signed-in wallet
+      responses:
+        "200":
+          description: Preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Preferences"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+    patch:
+      operationId: updatePreferences
+      tags: [preferences]
+      summary: Update mailbox preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreferencesUpdate"
+      responses:
+        "200":
+          description: Updated preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Preferences"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    ApiMessage:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+    Folder:
+      type: string
+      enum: [mailbox, requests, junk, sent]
+    MessageStatus:
+      type: string
+      description: "addressed: recorded for the recipient wallet. delivered: surfaced on a $MAIL surface the recipient accessed. opened: the authenticated recipient opened it."
+      enum: [addressed, delivered, opened]
+    AuthChallengeInput:
+      type: object
+      properties:
+        wallet:
+          type: string
+          description: Base58 Solana wallet address
+      required:
+        - wallet
+    AuthChallenge:
+      type: object
+      properties:
+        wallet:
+          type: string
+        nonce:
+          type: string
+        message:
+          type: string
+          description: Human-readable message to sign. Signing proves mailbox ownership. No SOL moves, no transaction is submitted.
+      required:
+        - wallet
+        - nonce
+        - message
+    AuthVerifyInput:
+      type: object
+      properties:
+        wallet:
+          type: string
+        nonce:
+          type: string
+        signature:
+          type: string
+          description: Base58-encoded ed25519 signature of the challenge message
+      required:
+        - wallet
+        - nonce
+        - signature
+    Session:
+      type: object
+      properties:
+        wallet:
+          type: ["string", "null"]
+          description: The signed-in wallet address, or null when signed out
+        authenticated:
+          type: boolean
+      required:
+        - wallet
+        - authenticated
+    MailboxSummary:
+      type: object
+      properties:
+        wallet:
+          type: string
+        hasNewMail:
+          type: boolean
+          description: True when unread mail exists in the Mailbox — drives the flag-up animation
+        mailboxUnread:
+          type: number
+        mailboxCount:
+          type: number
+        requestsCount:
+          type: number
+        junkCount:
+          type: number
+        sentCount:
+          type: number
+      required:
+        - wallet
+        - hasNewMail
+        - mailboxUnread
+        - mailboxCount
+        - requestsCount
+        - junkCount
+        - sentCount
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        senderWallet:
+          type: string
+        recipientWallet:
+          type: string
+        body:
+          type: string
+        folder:
+          $ref: "#/components/schemas/Folder"
+        status:
+          $ref: "#/components/schemas/MessageStatus"
+        senderVerified:
+          type: boolean
+          description: True when the sender proved wallet ownership by signature at send time
+        containsUrl:
+          type: boolean
+        urlDomains:
+          type: array
+          items:
+            type: string
+          description: Destination domains detected in the body, for link-safety warnings
+        threadId:
+          type: string
+        replyToMessageId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        deliveredAt:
+          type: ["string", "null"]
+        openedAt:
+          type: ["string", "null"]
+        isOutgoing:
+          type: boolean
+          description: True when the signed-in wallet is the sender
+      required:
+        - id
+        - senderWallet
+        - recipientWallet
+        - body
+        - folder
+        - status
+        - senderVerified
+        - containsUrl
+        - urlDomains
+        - threadId
+        - replyToMessageId
+        - createdAt
+        - deliveredAt
+        - openedAt
+        - isOutgoing
+    MessageInput:
+      type: object
+      properties:
+        recipientWallet:
+          type: string
+          description: Any valid base58 Solana wallet address — recipient does not need to be a $MAIL user
+        body:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        replyToMessageId:
+          type: string
+          description: Set when replying to keep correspondence in one thread
+      required:
+        - recipientWallet
+        - body
+    ShareCard:
+      type: object
+      properties:
+        messageId:
+          type: string
+        headline:
+          type: string
+          description: e.g. "I GOT MAIL"
+        deliveryType:
+          type: string
+          description: e.g. "STANDARD MAIL", "SIGNED MAIL"
+        senderVerified:
+          type: boolean
+        receivedAt:
+          type: string
+        revealed:
+          type: boolean
+          description: False by default. The message stays PRIVATE unless the owner explicitly reveals it.
+        body:
+          type: ["string", "null"]
+          description: Message content — null unless explicitly revealed by the owner
+      required:
+        - messageId
+        - headline
+        - deliveryType
+        - senderVerified
+        - receivedAt
+        - revealed
+        - body
+    BlockInput:
+      type: object
+      properties:
+        wallet:
+          type: string
+      required:
+        - wallet
+    BlockedWallet:
+      type: object
+      properties:
+        wallet:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - wallet
+        - createdAt
+    ReportInput:
+      type: object
+      properties:
+        messageId:
+          type: string
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+      required:
+        - messageId
+        - reason
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+        messageId:
+          type: string
+        reason:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - messageId
+        - reason
+        - createdAt
+    Preferences:
+      type: object
+      properties:
+        wallet:
+          type: string
+        unknownSenderHandling:
+          type: string
+          enum: [requests, mailbox, junk]
+          description: Where mail from unknown senders lands
+      required:
+        - wallet
+        - unknownSenderHandling
+    PreferencesUpdate:
+      type: object
+      properties:
+        unknownSenderHandling:
+          type: string
+          enum: [requests, mailbox, junk]
