@@ -34,7 +34,7 @@ spec and was **not** replaced — only hardened around the edges.
   wallet used for replay, impersonation, cross-wallet access, forged reports,
   enumeration, and flood attempts. No real wallet, key, or seed phrase was
   used or requested.
-- 34 attack scenarios executed against a running server; results in
+- 36 attack scenarios executed against a running server; results in
   `SECURITY_TEST_MATRIX_V1.md` (all PASS).
 
 ## 3. Attack surfaces reviewed
