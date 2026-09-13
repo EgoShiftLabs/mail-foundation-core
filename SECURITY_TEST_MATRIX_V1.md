@@ -29,44 +29,45 @@ Date: 2026-08-11 — **36 executed, 36 PASS, 0 FAIL.**
 | # | Scenario | Result |
 |---|---|---|
 | 12 | Protected endpoints require auth (summary/list/prefs/blocked/send → 401) | PASS |
-| 13 | Third party cannot read another wallet's message (404) | PASS |
-| 14 | Third party cannot open/accept/junk/share another wallet's message (404) | PASS |
-| 15 | Sender cannot mark own outgoing mail opened (state integrity) | PASS |
-| 16 | Delivery/opened states advance only via the real recipient | PASS |
-| 17 | Share card keeps body private by default (body null, revealed false) | PASS |
+| 13 | Authenticated send succeeds | PASS |
+| 14 | Third party cannot read another wallet's message (404) | PASS |
+| 15 | Third party cannot open/accept/junk/share another wallet's message (404) | PASS |
+| 16 | Sender cannot mark own outgoing mail opened (state integrity) | PASS |
+| 17 | Delivery/opened states advance only via the real recipient | PASS |
+| 18 | Share card keeps body private by default (body null, revealed false) | PASS |
 
 ## Input validation & injection
 
 | # | Scenario | Result |
 |---|---|---|
-| 18 | Malformed message id → 404 across all 6 id routes (no DB 500) | PASS |
-| 19 | Report with malformed messageId → 404 (no DB 500) | PASS |
-| 20 | Send with malformed replyToMessageId → 400 (no DB 500) | PASS |
-| 21 | XSS payload stored/returned verbatim as data (no server transform) | PASS |
-| 22 | SQL-injection payload inert (parameterized queries) | PASS |
-| 23 | SQLi in wallet field rejected as invalid address (400) | PASS |
-| 24 | Over-limit body (>4000 chars) rejected (400) | PASS |
-| 25 | Oversized JSON payload refused (413/400) | PASS |
-| 26 | Whitespace-only body rejected (400) | PASS |
+| 19 | Malformed message id → 404 across all 6 id routes (no DB 500) | PASS |
+| 20 | Report with malformed messageId → 404 (no DB 500) | PASS |
+| 21 | Send with malformed replyToMessageId → 400 (no DB 500) | PASS |
+| 22 | XSS payload stored/returned verbatim as data (no server transform) | PASS |
+| 23 | SQL-injection payload inert (parameterized queries) | PASS |
+| 24 | SQLi in wallet field rejected as invalid address (400) | PASS |
+| 25 | Over-limit body (>4000 chars) rejected (400) | PASS |
+| 26 | Oversized JSON payload refused (413/400) | PASS |
+| 27 | Whitespace-only body rejected (400) | PASS |
 
 ## Blocking & reporting
 
 | # | Scenario | Result |
 |---|---|---|
-| 27 | Blocked sender refused (RETURN TO SENDER, 403) | PASS |
-| 28 | A wallet cannot modify another wallet's block list | PASS |
-| 29 | Cannot report a message not addressed to you (404) | PASS |
+| 28 | Blocked sender refused (RETURN TO SENDER, 403) | PASS |
+| 29 | A wallet cannot modify another wallet's block list | PASS |
+| 30 | Cannot report a message not addressed to you (404) | PASS |
 
 ## Abuse resistance & disclosure
 
 | # | Scenario | Result |
 |---|---|---|
-| 30 | Malformed JSON → clean 4xx, no stack trace / SyntaxError leaked | PASS |
-| 31 | Challenge response identical for known vs never-seen wallet (no enumeration) | PASS |
-| 32 | Send endpoint rate-limits floods (429) | PASS |
-| 33 | Report endpoint rate-limits spam (429) | PASS |
-| 34 | Unblock endpoint rate-limits churn (429) | PASS |
-| 35 | Challenge issuance rate-limits floods (429) | PASS |
+| 31 | Malformed JSON → clean 4xx, no stack trace / SyntaxError leaked | PASS |
+| 32 | Challenge response identical for known vs never-seen wallet (no enumeration) | PASS |
+| 33 | Send endpoint rate-limits floods (429) | PASS |
+| 34 | Report endpoint rate-limits spam (429) | PASS |
+| 35 | Unblock endpoint rate-limits churn (429) | PASS |
+| 36 | Challenge issuance rate-limits floods (429) | PASS |
 
 ## Cryptographic primitives (code-verified — not counted in the 36 dynamic tests)
 
